@@ -1,5 +1,5 @@
-from .client import Default, to_dicts, to_lf
+from .client import Model, to_dicts, to_lf
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
-__all__ = ["Default", "to_dicts", "to_lf", "__version__"]
+__all__ = ["Model", "to_dicts", "to_lf", "__version__"]
