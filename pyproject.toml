@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "time-allocator-core"
+version = "0.1.0"
+description = "Time Allocator Core"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.5.0",
+    "polars>=1.9.0",
+]
+license = "MIT"
+license-files = ["LICENSE"]
+
+[project.urls]
+Homepage = "https://github.com/TimeAllocator/time-allocator-core"
+
+[tool.setuptools.packages.find]
+where = ["src"]
