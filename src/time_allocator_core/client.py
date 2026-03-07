@@ -3,6 +3,9 @@ from pydantic import BaseModel
 from abc import ABC
 from typing import Any, Self, Sequence
 import polars as pl
+import json
+import math
+from decimal import Decimal
 
 
 class Model(BaseModel, ABC):
@@ -18,6 +21,52 @@ class Model(BaseModel, ABC):
 
     def to_str(self) -> str:
         return str(self.model_dump_json())
+
+    def debug_json(
+        self,
+        *,
+        indent: int = 2,
+        sort_keys: bool = False,
+        ensure_ascii: bool = False,
+    ) -> str:
+        return json.dumps(
+            self._format_debug_value(self.model_dump()),
+            indent=indent,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
+            default=str,
+        )
+
+    def print_debug(
+        self,
+        *,
+        indent: int = 2,
+        sort_keys: bool = False,
+        ensure_ascii: bool = False,
+    ) -> str:
+        json_str = self.debug_json(
+            indent=indent,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
+        )
+        print(json_str)
+        return json_str
+
+    @classmethod
+    def _format_debug_value(cls, value: Any) -> Any:
+        if isinstance(value, dict):
+            return {k: cls._format_debug_value(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [cls._format_debug_value(v) for v in value]
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, int):
+            return f"{value:,}"
+        if isinstance(value, float):
+            return str(value) if not math.isfinite(value) else f"{value:,}"
+        if isinstance(value, Decimal):
+            return f"{value:,}"
+        return value
 
 
 def to_dicts(models: Sequence[Model]) -> list[dict[str, Any]]:
