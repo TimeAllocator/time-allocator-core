@@ -1,11 +1,17 @@
 from __future__ import annotations
-from pydantic import BaseModel
-from abc import ABC
-from typing import Any, Self, Sequence
-import polars as pl
+
 import json
 import math
+from abc import ABC
 from decimal import Decimal
+from typing import (
+    Any,
+    Self,
+    Sequence,
+)
+
+import polars as pl
+from pydantic import BaseModel
 
 
 class Model(BaseModel, ABC):
@@ -69,8 +75,11 @@ class Model(BaseModel, ABC):
         return value
 
 
-def to_dicts(models: Sequence[Model]) -> list[dict[str, Any]]:
-    return [m.model_dump() for m in models]
+def to_dicts(
+    models: Sequence[Model],
+    include_none: bool = True,
+) -> list[dict[str, Any]]:
+    return [m.model_dump(exclude_none=not include_none) for m in models]
 
 
 def to_lf(models: Sequence[Model]) -> pl.LazyFrame:
