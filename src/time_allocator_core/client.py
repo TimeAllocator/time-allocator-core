@@ -9,7 +9,6 @@ from typing import (
     Self,
     Sequence,
 )
-
 import polars as pl
 from pydantic import BaseModel
 
@@ -82,5 +81,8 @@ def to_dicts(
     return [m.model_dump(exclude_none=not include_none) for m in models]
 
 
-def to_lf(models: Sequence[Model]) -> pl.LazyFrame:
-    return pl.LazyFrame(to_dicts(models))
+def to_lf(
+    models: Sequence[Model],
+    include_none: bool = True,
+) -> pl.LazyFrame:
+    return pl.LazyFrame(to_dicts(models, include_none=include_none))
