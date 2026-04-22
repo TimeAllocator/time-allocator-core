@@ -1,6 +1,8 @@
 from __future__ import annotations
 from time_allocator_core.client import Model
 from time_allocator_core.dates import dt, datetime
+from pydantic import Field
+from typing import Literal
 
 
 class NestedModel(Model):
@@ -15,6 +17,10 @@ class TestModel(Model):
     str_list: list[str] = []
     optional_nested_model: NestedModel | None = NestedModel()
     nested_model_list: list[NestedModel] = [NestedModel()]
+    str_field: str = Field(default="default")
+    kind: Kind = "test"
+
+    type Kind = Literal["kind1", "kind2"]
 
 
 optional_date_test = TestModel(

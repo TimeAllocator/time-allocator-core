@@ -24,6 +24,8 @@ def test_to_lf() -> None:
                 pl.Field("optional_date", pl.Datetime(time_zone="UTC")),
             ]
         )
+        assert i["str_field"] == pl.String
+        assert i["kind"] == pl.Enum(["kind1", "kind2"])
         assert i["nested_model_list"] == pl.List(
             pl.Struct(
                 [

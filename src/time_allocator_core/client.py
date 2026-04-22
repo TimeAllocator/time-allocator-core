@@ -10,7 +10,10 @@ from typing import (
     get_args,
     get_origin,
     Union,
+    Literal,
+    TypeAliasType,
 )
+from types import UnionType
 from abc import ABC
 from enum import Enum
 import polars as pl
@@ -71,8 +74,23 @@ class Model(BaseModel, ABC):
 
     @classmethod
     def _annotation_to_polars_dtype(cls, annotation: Any) -> PolarsDataType:
+        if isinstance(annotation, TypeAliasType):
+            annotation = annotation.__value__
+
         origin = get_origin(annotation)
         args = get_args(annotation)
+
+        if origin is Literal:
+            literal_types = {type(v) for v in args}
+
+            if literal_types == {str}:
+                return pl.Enum(list(args))
+            if literal_types == {int}:
+                return pl.Enum(list(args))
+            if literal_types == {bool}:
+                return pl.Enum(list(args))
+
+            return pl.Object()
 
         if annotation is str:
             return pl.String()
@@ -96,7 +114,7 @@ class Model(BaseModel, ABC):
         if origin is dict:
             return pl.Object()
 
-        if origin is Union:
+        if origin in {Union, UnionType}:
             non_none_args = [a for a in args if a is not type(None)]
             if len(non_none_args) == 1:
                 return cls._annotation_to_polars_dtype(non_none_args[0])
