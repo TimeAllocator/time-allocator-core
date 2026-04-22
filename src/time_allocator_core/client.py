@@ -1,6 +1,5 @@
 from __future__ import annotations
 from polars._typing import PolarsDataType
-
 import json
 import math
 from decimal import Decimal
@@ -13,14 +12,53 @@ from typing import (
     Union,
 )
 from abc import ABC
-from datetime import date, datetime, time
 from enum import Enum
 import polars as pl
-from pydantic import BaseModel
-from pydantic.v1.schema import schema
+from pydantic import BaseModel, model_validator
+from datetime import UTC, datetime, date, time
 
 
 class Model(BaseModel, ABC):
+    """
+    Ensures that datetime fields are timezone-aware UTC datetimes.
+    """
+
+    @model_validator(mode="after")
+    def validate_datetimes_are_utc(self) -> Self:
+        for name, field in self.model_fields.items():
+            value = getattr(self, name)
+            annotation = field.annotation
+            normalized = self._normalize_value(annotation, value)
+            setattr(self, name, normalized)
+        return self
+
+    @classmethod
+    def _normalize_value(cls, annotation: Any, value: Any) -> Any:
+        if value is None:
+            return None
+
+        origin = get_origin(annotation)
+        args = get_args(annotation)
+
+        if annotation is datetime:
+            if value.tzinfo is None:
+                raise ValueError("datetime fields must be timezone-aware UTC datetimes")
+            return value.astimezone(UTC)
+
+        if origin is list and args:
+            inner = args[0]
+            return [cls._normalize_value(inner, v) for v in value]
+
+        if origin is Union:
+            non_none_args = [a for a in args if a is not type(None)]
+            if len(non_none_args) == 1:
+                return cls._normalize_value(non_none_args[0], value)
+
+        if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            return value
+
+        return value
+
     @classmethod
     def polars_schema(cls) -> pl.Schema:
         return pl.Schema(
@@ -44,7 +82,7 @@ class Model(BaseModel, ABC):
         if annotation is bool:
             return pl.Boolean()
         if annotation is datetime:
-            return pl.Datetime()
+            return pl.Datetime(time_zone="UTC")
         if annotation is date:
             return pl.Date()
         if annotation is time:
@@ -77,12 +115,12 @@ class Model(BaseModel, ABC):
 
     @classmethod
     def from_lf(cls, lf: pl.LazyFrame) -> list[Self]:
-        return [cls(**r) for r in lf.collect().to_dicts()]
+        return [cls.model_validate(r) for r in lf.collect().iter_rows(named=True)]
 
     def to_dict(self, include_none: bool = True) -> dict[str, Any]:
         return self.model_dump(exclude_none=not include_none)
 
-    def to_lf(self) -> pl.LazyFrame:
+    def to_lf_(self) -> pl.LazyFrame:
         return pl.LazyFrame(
             schema=self.polars_schema(),
             data=self.to_dict(),
@@ -138,14 +176,22 @@ class Model(BaseModel, ABC):
         return value
 
     @classmethod
-    def to_lf_(
+    def to_lf(
         cls,
         models: Sequence[Self],
+        convert_tz: str | None = None,
     ) -> pl.LazyFrame:
-        return pl.LazyFrame(
-            schema=cls.polars_schema(),
+        schema = cls.polars_schema()
+
+        lf = pl.LazyFrame(
+            schema=schema,
             data=cls.to_dicts(models, include_none=True),
         )
+
+        if convert_tz:
+            return lf.with_columns(convert_timezones(schema, convert_tz))
+
+        return lf
 
     @classmethod
     def to_dicts(
@@ -154,3 +200,13 @@ class Model(BaseModel, ABC):
         include_none: bool = True,
     ) -> list[dict[str, Any]]:
         return [m.to_dict(include_none) for m in models]
+
+
+def convert_timezones(schema: pl.Schema, tz: str) -> list[pl.Expr]:
+    exprs: list[pl.Expr] = []
+
+    for field_name, field_type in schema.items():
+        if field_type == pl.Datetime:
+            exprs.append(pl.col(field_name).dt.convert_time_zone(tz))
+
+    return exprs

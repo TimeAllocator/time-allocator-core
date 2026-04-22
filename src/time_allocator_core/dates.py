@@ -1,13 +1,39 @@
 from datetime import datetime, timezone
+from typing import Literal
+from zoneinfo import ZoneInfo
 
 
-def to_utc(dt: datetime) -> datetime:
+def to_utc(value: datetime) -> datetime:
     """Convert a datetime to UTC (always offset-aware)."""
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
     else:
-        return dt.astimezone(timezone.utc)
+        return value.astimezone(timezone.utc)
 
 
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def dt(
+    year: int,
+    month: int,
+    day: int,
+    hour: int = 0,
+    minute: int = 0,
+    second: int = 0,
+    zone: Literal[
+        "UTC",
+        "America/New_York",
+        "America/Chicago",
+    ] = "UTC",
+) -> datetime:
+    return datetime(
+        year=year,
+        month=month,
+        day=day,
+        hour=hour,
+        minute=minute,
+        second=second,
+        tzinfo=ZoneInfo(zone),
+    )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from time_allocator_core.client import Model
-from time_allocator_core.dates import datetime
+from time_allocator_core.dates import dt, datetime
 
 
 class NestedModel(Model):
@@ -19,7 +19,7 @@ class TestModel(Model):
 
 optional_date_test = TestModel(
     value=1,
-    date=datetime(2023, 1, 1),
+    date=dt(2023, 1, 1),
     optional_date=None,
 )
 
