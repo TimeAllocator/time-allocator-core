@@ -1,15 +1,23 @@
 from pydantic import Field
 
 from .client import Model
-from .dates import now_utc, datetime, timezone
+from .dates import (
+    now_utc,
+    datetime,
+    Zone,
+    dt,
+    to_utc,
+)
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 __all__ = [
-    "Model",
     "Field",
+    "Model",
     "now_utc",
     "datetime",
-    "timezone",
+    "Zone",
+    "dt",
+    "to_utc",
     "__version__",
 ]

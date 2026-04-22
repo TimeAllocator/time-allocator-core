@@ -16,6 +16,7 @@ from enum import Enum
 import polars as pl
 from pydantic import BaseModel, model_validator
 from datetime import UTC, datetime, date, time
+from time_allocator_core.dates import Zone
 
 
 class Model(BaseModel, ABC):
@@ -179,7 +180,7 @@ class Model(BaseModel, ABC):
     def to_lf(
         cls,
         models: Sequence[Self],
-        convert_tz: str | None = None,
+        convert_tz: Zone | None = None,
     ) -> pl.LazyFrame:
         schema = cls.polars_schema()
 
@@ -202,11 +203,11 @@ class Model(BaseModel, ABC):
         return [m.to_dict(include_none) for m in models]
 
 
-def convert_timezones(schema: pl.Schema, tz: str) -> list[pl.Expr]:
+def convert_timezones(schema: pl.Schema, zone: Zone) -> list[pl.Expr]:
     exprs: list[pl.Expr] = []
 
     for field_name, field_type in schema.items():
         if field_type == pl.Datetime:
-            exprs.append(pl.col(field_name).dt.convert_time_zone(tz))
+            exprs.append(pl.col(field_name).dt.convert_time_zone(zone))
 
     return exprs

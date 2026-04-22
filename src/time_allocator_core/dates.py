@@ -2,6 +2,14 @@ from datetime import datetime, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo
 
+Zone = Literal[
+    "UTC",
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+]
+
 
 def to_utc(value: datetime) -> datetime:
     """Convert a datetime to UTC (always offset-aware)."""
@@ -22,11 +30,7 @@ def dt(
     hour: int = 0,
     minute: int = 0,
     second: int = 0,
-    zone: Literal[
-        "UTC",
-        "America/New_York",
-        "America/Chicago",
-    ] = "UTC",
+    zone: Zone = "UTC",
 ) -> datetime:
     return datetime(
         year=year,
