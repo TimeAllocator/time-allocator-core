@@ -203,11 +203,12 @@ class Model(BaseModel, ABC):
         return [m.to_dict(include_none) for m in models]
 
 
-def convert_timezones(schema: pl.Schema, zone: Zone) -> list[pl.Expr]:
-    exprs: list[pl.Expr] = []
-
-    for field_name, field_type in schema.items():
-        if field_type == pl.Datetime:
-            exprs.append(pl.col(field_name).dt.convert_time_zone(zone))
-
-    return exprs
+def convert_timezones(
+    schema: pl.Schema,
+    zone: Zone,
+) -> list[pl.Expr]:
+    return [
+        pl.col(field_name).dt.convert_time_zone(zone)
+        for field_name, field_type in schema.items()
+        if field_type == pl.Datetime
+    ]
