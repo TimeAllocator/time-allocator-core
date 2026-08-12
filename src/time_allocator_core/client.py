@@ -136,6 +136,19 @@ class Model(BaseModel, ABC):
     def from_lf(cls, lf: pl.LazyFrame) -> list[Self]:
         return [cls.model_validate(r) for r in lf.collect().iter_rows(named=True)]
 
+    @classmethod
+    def from_csv(cls, path: str, separator: str = ",") -> list[Self]:
+        return cls.from_lf(
+            pl.scan_csv(
+                path,
+                separator=separator,
+            )
+        )
+        
+    @classmethod
+    def to_csv(cls, models: Sequence[Self], path: str, separator: str = ",") -> None:
+        cls.to_lf(models).collect().write_csv(path, separator=separator)
+
     def to_dict(self, include_none: bool = True) -> dict[str, Any]:
         return self.model_dump(exclude_none=not include_none)
 

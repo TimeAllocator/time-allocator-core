@@ -18,7 +18,7 @@ class TestModel(Model):
     optional_nested_model: NestedModel | None = NestedModel()
     nested_model_list: list[NestedModel] = [NestedModel()]
     str_field: str = Field(default="default")
-    kind: Kind = "test"
+    kind: Kind = "kind1"
 
     type Kind = Literal["kind1", "kind2"]
 
